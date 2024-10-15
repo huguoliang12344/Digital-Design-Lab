@@ -10,7 +10,7 @@
 // Target Devices: 
 // Tool Versions: 
 // Description: 
-// 
+// 产生两种条纹和两种棋盘格照片，通过拨码开关控制具体显示哪一个
 // Dependencies: 
 // 
 // Revision:
