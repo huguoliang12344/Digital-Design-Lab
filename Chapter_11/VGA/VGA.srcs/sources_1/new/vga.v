@@ -24,7 +24,7 @@
 
             input clock; //系统输入时钟 100MHz
             input [1:0]switch;
-            output [2:0]disp_RGB; //VGA 数据输出
+            output [2:0]disp_R; //VGA 数据输出
             output hsync; //VGA 行同步信号
             output vsync; //VGA 场同步信号
 
