@@ -45,12 +45,12 @@
             //VGA 行、场扫描时序参数表
             parameter hsync_end = 10'd95,
                       hdat_begin = 10'd143,
-            hdat_end = 10'd783,
-            hpixel_end = 10'd799,
-            vsync_end = 10'd1,
-            vdat_begin = 10'd34,
-            vdat_end = 10'd514,
-            vline_end = 10'd524;
+                      hdat_end = 10'd783,
+                      hpixel_end = 10'd799,
+                      vsync_end = 10'd1,
+                      vdat_begin = 10'd34,
+                      vdat_end = 10'd514,
+                      vline_end = 10'd524;
 
             always @(posedge clock)
             begin
@@ -105,39 +105,39 @@
             always @(posedge vga_clk) //产生竖彩条
             begin
                 if(hcount < 223)
-               v_dat <= 3'h7; 
+                    v_dat <= 3'h7; 
                 else if(hcount < 303)
                     v_dat <= 3'h6; 
                 else if(hcount < 383)
-               v_dat <= 3'h5;
+                    v_dat <= 3'h5;
                 else if(hcount < 463)
-               v_dat <= 3'h4; 
+                    v_dat <= 3'h4; 
                 else if(hcount < 543)
-               v_dat <= 3'h3; 
+                    v_dat <= 3'h3; 
                 else if(hcount < 623)
-               v_dat <= 3'h2; 
+                    v_dat <= 3'h2; 
                 else if(hcount < 703)
-               v_dat <= 3'h1; 
+                    v_dat <= 3'h1; 
                 else
-               v_dat <= 3'h0; 
+                    v_dat <= 3'h0; 
             end
 
             always @(posedge vga_clk) //产生横彩条
             begin
                 if(vcount < 94)
-               h_dat <= 3'h7; 
+                    h_dat <= 3'h7; 
                 else if(vcount < 154)
-               h_dat <= 3'h6; 
+                    h_dat <= 3'h6; 
                 else if(vcount < 214)
-               h_dat <= 3'h5; 
+                    h_dat <= 3'h5; 
                 else if(vcount < 274)
-               h_dat <= 3'h4; 
+                    h_dat <= 3'h4; 
                 else if(vcount < 334)
-               h_dat <= 3'h3; 
+                    h_dat <= 3'h3; 
                 else if(vcount < 394)
-               h_dat <= 3'h2; 
+                    h_dat <= 3'h2; 
                 else if(vcount < 454)
-               h_dat <= 3'h1; 
+                    h_dat <= 3'h1; 
                 else
                     h_dat <= 3'h0;
                 end
