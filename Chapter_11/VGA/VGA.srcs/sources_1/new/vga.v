@@ -44,7 +44,7 @@
 
             //VGA 行、场扫描时序参数表
             parameter hsync_end = 10'd95,
-            hdat_begin = 10'd143,
+                      hdat_begin = 10'd143,
             hdat_end = 10'd783,
             hpixel_end = 10'd799,
             vsync_end = 10'd1,
