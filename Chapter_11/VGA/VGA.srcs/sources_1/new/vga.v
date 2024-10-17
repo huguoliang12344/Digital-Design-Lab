@@ -24,7 +24,7 @@
 
             input clock; //系统输入时钟 100MHz
             input [1:0]switch;
-            output [2:0]disp_R; //VGA 数据输出
+            output [11:0]disp_R; //VGA 数据输出。RGB 4:4:4
             output hsync; //VGA 行同步信号
             output vsync; //VGA 场同步信号
 
@@ -90,7 +90,7 @@
 && ((vcount >= vdat_begin) && (vcount < vdat_end));
             assign hsync = (hcount > hsync_end);
             assign vsync = (vcount > vsync_end);
-            assign disp_RGB = (dat_act) ? data : 3'h00;
+            assign disp_RGB = (dat_act) ? data : 12'h000;
 
             always @(posedge vga_clk)
             begin
@@ -105,41 +105,41 @@
             always @(posedge vga_clk) //产生竖彩条
             begin
                 if(hcount < 223)
-                    v_dat <= 3'h7; 
+                    v_dat <= 12'h777; 
                 else if(hcount < 303)
-                    v_dat <= 3'h6; 
+                    v_dat <= 12'h666; 
                 else if(hcount < 383)
-                    v_dat <= 3'h5;
+                    v_dat <= 12'h555;
                 else if(hcount < 463)
-                    v_dat <= 3'h4; 
+                    v_dat <= 12'h444; 
                 else if(hcount < 543)
-                    v_dat <= 3'h3; 
+                    v_dat <= 12'h333; 
                 else if(hcount < 623)
-                    v_dat <= 3'h2; 
+                    v_dat <= 12'h222; 
                 else if(hcount < 703)
-                    v_dat <= 3'h1; 
+                    v_dat <= 12'h111; 
                 else
-                    v_dat <= 3'h0; 
+                    v_dat <= 12'h000; 
             end
 
             always @(posedge vga_clk) //产生横彩条
             begin
                 if(vcount < 94)
-                    h_dat <= 3'h7; 
+                    h_dat <= 12'h777; 
                 else if(vcount < 154)
-                    h_dat <= 3'h6; 
+                    h_dat <= 12'h666; 
                 else if(vcount < 214)
-                    h_dat <= 3'h5; 
+                    h_dat <= 12'h555; 
                 else if(vcount < 274)
-                    h_dat <= 3'h4; 
+                    h_dat <= 12'h444; 
                 else if(vcount < 334)
-                    h_dat <= 3'h3; 
+                    h_dat <= 12'h333; 
                 else if(vcount < 394)
-                    h_dat <= 3'h2; 
+                    h_dat <= 12'h222; 
                 else if(vcount < 454)
-                    h_dat <= 3'h1; 
+                    h_dat <= 12'h111; 
                 else
-                    h_dat <= 3'h0;
+                    h_dat <= 12'h000;
                 end
             endmodule
 
