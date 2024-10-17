@@ -20,11 +20,11 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-  module vga( clock, switch, disp_RGB, hsync, vsync );
+  module vga( sys_clk, switch, disp_RGB, hsync, vsync );
 
-            input clock; //系统输入时钟 100MHz
-            input [1:0]switch;
-            output [11:0]disp_R; //VGA 数据输出。RGB 4:4:4
+            input sys_clk; //系统输入时钟 100MHz
+            input [1:0]switch;//控制
+            output [11:0]disp_RGB; //VGA 数据输出。RGB 4:4:4
             output hsync; //VGA 行同步信号
             output vsync; //VGA 场同步信号
 
@@ -52,12 +52,12 @@
                       vdat_end = 10'd514,
                       vline_end = 10'd524;
 
-            always @(posedge clock)
+            always @(posedge sys_clk)
             begin
                 if(cnt_clk == 1)begin
                     vga_clk <= ~vga_clk;
                     cnt_clk <= 0;
-                 end
+                end
                 else
                     cnt_clk <= cnt_clk +1;
             end
@@ -68,15 +68,14 @@
                 if (hcount_ov)
                     hcount <= 10'd0;
                  else
-                     hcount <= hcount + 10'd1;
+                    hcount <= hcount + 10'd1;
             end
             assign hcount_ov = (hcount == hpixel_end);
 
             //场扫描
             always @(posedge vga_clk)
             begin
-                if (hcount_ov)
-                begin
+                if (hcount_ov) begin
                     if (vcount_ov)
                         vcount <= 10'd0;
                     else
