@@ -109,7 +109,7 @@
                     2'd3: data <= (v_dat ~^ h_dat); //产生棋盘格
                 endcase
             end
-
+//至于颜色的设置，可以打开网上调色板，网上一般为24位RGB888，我们可以选择用每个颜色中的高4位
             always @(posedge vga_clk) //产生竖彩条
             begin
                 if(hcount < 223)
@@ -127,7 +127,7 @@
                 else if(hcount < 703)
                     v_dat <= 12'h2EE; //浅蓝
                 else
-                    v_dat <= 12'hFFF; 
+                    v_dat <= 12'hFFF; //白色
             end
 
             always @(posedge vga_clk) //产生横彩条
@@ -135,19 +135,19 @@
                 if(vcount < 94)
                     h_dat <= 12'hF00; 
                 else if(vcount < 154)
-                    h_dat <= 12'h000; 
+                    h_dat <= 12'h0F0; 
                 else if(vcount < 214)
-                    h_dat <= 12'hF00; 
+                    h_dat <= 12'h00F; 
                 else if(vcount < 274)
-                    h_dat <= 12'h444; 
+                    h_dat <= 12'hFFF; 
                 else if(vcount < 334)
-                    h_dat <= 12'h333; 
+                    h_dat <= 12'hFF0; 
                 else if(vcount < 394)
-                    h_dat <= 12'h222; 
+                    h_dat <= 12'hC0F; 
                 else if(vcount < 454)
-                    h_dat <= 12'h111; 
+                    h_dat <= 12'h2EE; 
                 else
-                    h_dat <= 12'h000;
+                    h_dat <= 12'hFFF;
                 end
             endmodule
 
