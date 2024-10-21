@@ -113,21 +113,21 @@
             always @(posedge vga_clk) //产生竖彩条
             begin
                 if(hcount < 223)
-                    v_dat <= 12'hF00; 
-                else if(hcount < 303)
-                    v_dat <= 12'h0F0; 
+                    v_dat <= 12'hF00; //红
+                else if(hcount < 303) 
+                    v_dat <= 12'h0F0; //绿
                 else if(hcount < 383)
-                    v_dat <= 12'h00F;
+                    v_dat <= 12'h00F; //蓝
                 else if(hcount < 463)
-                    v_dat <= 12'hCCC; 
+                    v_dat <= 12'hFFF; //白
                 else if(hcount < 543)
-                    v_dat <= 12'hAAA; 
+                    v_dat <= 12'hFF0; //黄
                 else if(hcount < 623)
-                    v_dat <= 12'hCCC; 
+                    v_dat <= 12'hC0F; //紫
                 else if(hcount < 703)
-                    v_dat <= 12'h000; 
+                    v_dat <= 12'h2EE; //浅蓝
                 else
-                    v_dat <= 12'h000; 
+                    v_dat <= 12'hFFF; 
             end
 
             always @(posedge vga_clk) //产生横彩条
