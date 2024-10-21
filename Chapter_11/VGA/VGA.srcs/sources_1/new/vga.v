@@ -30,17 +30,19 @@
 
             reg [9:0] hcount; //VGA 行扫描计数器
             reg [9:0] vcount; //VGA 场扫描计数器
-            reg [2:0] data;
-            reg [2:0] h_dat;
-            reg [2:0] v_dat;
+            reg [11:0] data;
+            reg [11:0] h_dat;
+            reg [11:0] v_dat;
             reg flag;
             wire hcount_ov;
             wire vcount_ov;
             wire dat_act;
             wire hsync;
             wire vsync;
-            reg vga_clk=0;
-            reg cnt_clk=0; //分频计数
+            wire vga_clk;
+            //reg cnt_clk=0; //分频计数
+
+
 
             //VGA 行、场扫描时序参数表
             parameter hsync_end = 10'd95,
@@ -52,6 +54,13 @@
                       vdat_end = 10'd514,
                       vline_end = 10'd524;
 
+            clk_wiz_0 inst
+              (
+              // Clock out ports  
+              .clk_out1(vga_clk),
+              .clk_in1(sys_clk)
+              );
+/*
             always @(posedge sys_clk)
             begin
                 if(cnt_clk == 1)begin
@@ -61,7 +70,7 @@
                 else
                     cnt_clk <= cnt_clk +1;
             end
-
+*/
   //************************VGA 驱动部分*******************************//行扫描
             always @(posedge vga_clk)
             begin
@@ -104,19 +113,19 @@
             always @(posedge vga_clk) //产生竖彩条
             begin
                 if(hcount < 223)
-                    v_dat <= 12'h777; 
+                    v_dat <= 12'hF00; 
                 else if(hcount < 303)
-                    v_dat <= 12'h666; 
+                    v_dat <= 12'h0F0; 
                 else if(hcount < 383)
-                    v_dat <= 12'h555;
+                    v_dat <= 12'h00F;
                 else if(hcount < 463)
-                    v_dat <= 12'h444; 
+                    v_dat <= 12'hCCC; 
                 else if(hcount < 543)
-                    v_dat <= 12'h333; 
+                    v_dat <= 12'hAAA; 
                 else if(hcount < 623)
-                    v_dat <= 12'h222; 
+                    v_dat <= 12'hCCC; 
                 else if(hcount < 703)
-                    v_dat <= 12'h111; 
+                    v_dat <= 12'h000; 
                 else
                     v_dat <= 12'h000; 
             end
@@ -124,11 +133,11 @@
             always @(posedge vga_clk) //产生横彩条
             begin
                 if(vcount < 94)
-                    h_dat <= 12'h777; 
+                    h_dat <= 12'hF00; 
                 else if(vcount < 154)
-                    h_dat <= 12'h666; 
+                    h_dat <= 12'h000; 
                 else if(vcount < 214)
-                    h_dat <= 12'h555; 
+                    h_dat <= 12'hF00; 
                 else if(vcount < 274)
                     h_dat <= 12'h444; 
                 else if(vcount < 334)
