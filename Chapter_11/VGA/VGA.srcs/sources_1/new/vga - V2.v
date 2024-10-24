@@ -20,11 +20,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-  module vga( sys_clk, switch, disp_RGB, hsync, vsync );
+  module vga( sys_clk, sys_rst_n, disp_RGB, hsync, vsync );
 
             input sys_clk; //系统输入时钟 100MHz
-            input [1:0]switch;//控制
-            output [11:0]disp_RGB; //VGA 数据输出。RGB 4:4:4
+            //input [1:0]switch;//控制
+            input sys_rst_n;
+            output [11:0] disp_RGB; //VGA 数据输出。RGB 4:4:4
             output hsync; //VGA 行同步信号
             output vsync; //VGA 场同步信号
 
@@ -37,11 +38,14 @@
             wire hcount_ov;
             wire vcount_ov;
             wire dat_act;
-            wire hsync;
-            wire vsync;
-            wire vga_clk;
-            //reg cnt_clk=0; //分频计数
 
+            wire vga_clk_w;//使用PLL IP对sys_clk分频后的输出
+            wire locked_w;//IP的输出，表示PLL输出稳定
+            
+            wire rst_n_w;//sys_rst_n与locked相与后得到的中间变量
+                        //用于其他模块的复位
+            wire [11:0] pixel_data_w;
+            
 
 
             //VGA 行、场扫描时序参数表
