@@ -185,8 +185,13 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
     wire vga_en;//数据输出使能信号
     wire data_req;//数据请求信号
 
-    //VGA行场同步信号
+    //VGA行场同步信号，都是低电平有效
     assign vga_hs = (cnt_h <= H_SYNC - 1'b1) ? 1'b0 : 1'b1;
     assign vga_vs = (cnt_v <= V_SYNC - 1'b1) ? 1'b0 : 1'b1;
+
+    // RGB444数据输出使能信号
+    assign vga_en = (((cnt_h >= H_SYNC+H_BACK) && (cnt_h < H_SYNC+H_BACK+H_DISP))
+                    &&((cnt_v >= V_SYNC+V_BACK) && (cnt_v < V_SYNC+V_BACK+V_DISP)))
+                    ? 1'b1 : 1'b0;
 
 endmodule
