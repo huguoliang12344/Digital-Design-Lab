@@ -194,4 +194,33 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
                     &&((cnt_v >= V_SYNC+V_BACK) && (cnt_v < V_SYNC+V_BACK+V_DISP)))
                     ? 1'b1 : 1'b0;
 
+    //像素点坐标 
+    assign pixel_xpos = data_req ? (cnt_h - (H_SYNC + H_BACK - 1'b1)) : 10'd0;
+    assign pixel_ypos = data_req ? (cnt_v - (V_SYNC + V_BACK - 1'b1)) : 10'd0;
+
+    //行计数器对像素时钟计数
+    always @(posedge vga_clk or negedge rst_n_w) begin 
+        if (!sys_rst_n)
+            cnt_h <= 10'd0; 
+        else if(cnt_h == H_TOTAL - 1'b1) 
+            cnt_h <= 10'd0; 
+        else
+            cnt_h <= cnt_h +1'b1;
+    end
+
+    //场计数器对像素时钟计数
+    always @(posedge vga_clk or negedge rst_n_w) begin 
+        if (!sys_rst_n)
+            cnt_ <= 10'd0; 
+        else if(cnt_h == H_TOTAL - 1'b1) begin
+            if(cnt_v == V_TOTAL - 1'b1)
+                cnt_v <= 10'd0;
+            else cnt_v <= cnt_v + 1'b1;
+        end
+    end
+
+
+
+
+
 endmodule
