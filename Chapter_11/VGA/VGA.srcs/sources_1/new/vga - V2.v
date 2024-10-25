@@ -43,7 +43,10 @@
             wire locked_w;//IP的输出，表示PLL输出稳定
             
             wire rst_n_w;//sys_rst_n与locked相与后得到的中间变量,用于其他模块的复位
-            wire [11:0] pixel_data_w;
+
+            wire [11:0] pixel_data_w;//用于接vga数据模块的输出
+            wire [11:0] pixel_xpos_w;//像素点横坐标
+            wire [11:0] pixel_ypos_w;//
             
 
 
