@@ -46,8 +46,10 @@
 
             wire [11:0] pixel_data_w;//用于接vga数据模块的输出
             wire [11:0] pixel_xpos_w;//像素点横坐标
-            wire [11:0] pixel_ypos_w;//
+            wire [11:0] pixel_ypos_w;//像素点纵坐标
             
+            //Pll输出稳定后就停止复位
+            assign rst_n_w =  
 
 
             //VGA 行、场扫描时序参数表
