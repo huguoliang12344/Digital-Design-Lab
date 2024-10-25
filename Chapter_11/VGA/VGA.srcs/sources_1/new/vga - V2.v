@@ -20,36 +20,39 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-  module vga( sys_clk, sys_rst_n, disp_RGB, hsync, vsync );
+  module vga( sys_clk, sys_rst_n, vga_rgb, vga_hs, vga_vs );
 
             input sys_clk; //系统输入时钟 100MHz
             //input [1:0]switch;//控制
             input sys_rst_n;
-            output [11:0] disp_RGB; //VGA 数据输出。RGB 4:4:4
-            output hsync; //VGA 行同步信号
-            output vsync; //VGA 场同步信号
+            output [11:0] vga_rgb; //VGA 数据输出。RGB 4:4:4
+            output vga_hs; //VGA 行同步信号
+            output vga_vs; //VGA 场同步信号
 
-            reg [9:0] hcount; //VGA 行扫描计数器
-            reg [9:0] vcount; //VGA 场扫描计数器
-            reg [11:0] data;
-            reg [11:0] h_dat;
-            reg [11:0] v_dat;
-            reg flag;
-            wire hcount_ov;
-            wire vcount_ov;
-            wire dat_act;
-
-            wire vga_clk_w;//使用PLL IP对sys_clk分频后的输出
-            wire locked_w;//IP的输出，表示PLL输出稳定
+            wire vga_clk;//使用PLL IP对sys_clk分频后的输出
+            wire locked;//IP的输出，表示PLL输出稳定
             
             wire rst_n_w;//sys_rst_n与locked相与后得到的中间变量,用于其他模块的复位
-
-            wire [11:0] pixel_data_w;//用于接vga数据模块的输出
-            wire [11:0] pixel_xpos_w;//像素点横坐标
-            wire [11:0] pixel_ypos_w;//像素点纵坐标
+            //将该信号作为VGA驱动模块及显示模块的复位信号，可避免由于系统复位后像素时钟不稳定造成的VGA时序错误。
+           
+            wire [11:0] pixel_data;//用于接vga数据模块的输出
+            wire [9:0] pixel_xpos;//像素点横坐标,10位够用了
+            wire [9:0] pixel_ypos;//像素点纵坐标，10位够用了
             
             //Pll输出稳定后就停止复位
-            assign rst_n_w =  
+            assign rst_n_w =  sys_rst_n & locked;
+
+            //pll核的实例化
+
+
+            //vga驱动器的实例化
+
+
+            //vga数据模块的实例化
+
+
+
+/*
 
 
             //VGA 行、场扫描时序参数表
@@ -157,5 +160,32 @@
                 else
                     h_dat <= 12'hFFF;
                 end
-            endmodule
 
+                */
+endmodule
+
+
+//vga驱动模块
+module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs,vga_rgb);
+    input  vga_clk,rst_n_w;//来自pll分频后的时钟以及与后的复位信号
+    input [11:0] pixel_data;//来自vga显示模块的像素数据
+    output vga_hs,vga_vs;//行同步和场同步信号
+    output [9:0] pixel_xpos,pixel_ypos;//像素点横纵坐标
+    output [11:0] vga_rgb;//输出像素数据给vga显示器
+
+    //parameter define 
+    parameter H_SYNC = 10'd96; //行同步
+    parameter H_BACK = 10'd48; //行显示后沿
+    parameter H_DISP = 10'd640; //行有效数据
+    parameter H_FRONT = 10'd16; //行显示前沿
+    parameter H_TOTAL = 10'd800; //行扫描周期
+    parameter V_SYNC = 10'd2; //场同步
+    parameter V_BACK = 10'd33; //场显示后沿
+    parameter V_DISP = 10'd480; //场有效数据
+    parameter V_FRONT = 10'd10; //场显示前沿
+    parameter V_TOTAL = 10'd525; //场扫描周期
+
+
+
+
+endmodule
