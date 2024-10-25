@@ -71,17 +71,7 @@
               .clk_out1(vga_clk),
               .clk_in1(sys_clk)
               );
-/*
-            always @(posedge sys_clk)
-            begin
-                if(cnt_clk == 1)begin
-                    vga_clk <= ~vga_clk;
-                    cnt_clk <= 0;
-                end
-                else
-                    cnt_clk <= cnt_clk +1;
-            end
-*/
+
   //************************VGA 驱动部分*******************************//行扫描
             always @(posedge vga_clk)
             begin
@@ -185,7 +175,18 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
     parameter V_FRONT = 10'd10; //场显示前沿
     parameter V_TOTAL = 10'd525; //场扫描周期
 
+    //reg define 
+    //过行计数器cnt_h对像素时钟计数，计满一个行扫描周期后清零并重新开始计数。
+    reg [9:0] cnt_h;
+    //通过场计数器cnt_v对行进行计数，即扫描完一行后cnt_v加1，计满一个场扫描周期后清零并重新开始计数
+    reg [9:0] cnt_v;
 
+    //wire define
+    wire vga_en;//数据输出使能信号
+    wire data_req;//数据请求信号
 
+    //VGA行场同步信号
+    assign vga_hs = (cnt_h <= H_SYNC - 1'b1) ? 1'b0 : 1'b1;
+    assign vga_vs = (cnt_v <= V_SYNC - 1'b1) ? 1'b0 : 1'b1;
 
 endmodule
