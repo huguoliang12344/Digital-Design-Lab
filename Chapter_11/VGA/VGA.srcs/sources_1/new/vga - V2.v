@@ -10,7 +10,7 @@
 // Target Devices: 
 // Tool Versions: 
 // Description: 
-// ²úÉúÁ½ÖÖÌõÎÆºÍÁ½ÖÖÆåÅÌ¸ñÕÕÆ¬£¬Í¨¹ı²¦Âë¿ª¹Ø¿ØÖÆ¾ßÌåÏÔÊ¾ÄÄÒ»¸ö
+// äº§ç”Ÿä¸¤ç§æ¡çº¹å’Œä¸¤ç§æ£‹ç›˜æ ¼ç…§ç‰‡ï¼Œé€šè¿‡æ‹¨ç å¼€å…³æ§åˆ¶å…·ä½“æ˜¾ç¤ºå“ªä¸€ä¸ª
 // Dependencies: 
 // 
 // Revision:
@@ -22,15 +22,15 @@
 
   module vga( sys_clk, sys_rst_n, disp_RGB, hsync, vsync );
 
-            input sys_clk; //ÏµÍ³ÊäÈëÊ±ÖÓ 100MHz
-            //input [1:0]switch;//¿ØÖÆ
+            input sys_clk; //ç³»ç»Ÿè¾“å…¥æ—¶é’Ÿ 100MHz
+            //input [1:0]switch;//æ§åˆ¶
             input sys_rst_n;
-            output [11:0] disp_RGB; //VGA Êı¾İÊä³ö¡£RGB 4:4:4
-            output hsync; //VGA ĞĞÍ¬²½ĞÅºÅ
-            output vsync; //VGA ³¡Í¬²½ĞÅºÅ
+            output [11:0] disp_RGB; //VGA æ•°æ®è¾“å‡ºã€‚RGB 4:4:4
+            output hsync; //VGA è¡ŒåŒæ­¥ä¿¡å·
+            output vsync; //VGA åœºåŒæ­¥ä¿¡å·
 
-            reg [9:0] hcount; //VGA ĞĞÉ¨Ãè¼ÆÊıÆ÷
-            reg [9:0] vcount; //VGA ³¡É¨Ãè¼ÆÊıÆ÷
+            reg [9:0] hcount; //VGA è¡Œæ‰«æè®¡æ•°å™¨
+            reg [9:0] vcount; //VGA åœºæ‰«æè®¡æ•°å™¨
             reg [11:0] data;
             reg [11:0] h_dat;
             reg [11:0] v_dat;
@@ -39,16 +39,15 @@
             wire vcount_ov;
             wire dat_act;
 
-            wire vga_clk_w;//Ê¹ÓÃPLL IP¶Ôsys_clk·ÖÆµºóµÄÊä³ö
-            wire locked_w;//IPµÄÊä³ö£¬±íÊ¾PLLÊä³öÎÈ¶¨
+            wire vga_clk_w;//ä½¿ç”¨PLL IPå¯¹sys_clkåˆ†é¢‘åçš„è¾“å‡º
+            wire locked_w;//IPçš„è¾“å‡ºï¼Œè¡¨ç¤ºPLLè¾“å‡ºç¨³å®š
             
-            wire rst_n_w;//sys_rst_nÓëlockedÏàÓëºóµÃµ½µÄÖĞ¼ä±äÁ¿
-                        //ÓÃÓÚÆäËûÄ£¿éµÄ¸´Î»
+            wire rst_n_w;//sys_rst_nä¸lockedç›¸ä¸åå¾—åˆ°çš„ä¸­é—´å˜é‡,ç”¨äºå…¶ä»–æ¨¡å—çš„å¤ä½
             wire [11:0] pixel_data_w;
             
 
 
-            //VGA ĞĞ¡¢³¡É¨ÃèÊ±Ğò²ÎÊı±í
+            //VGA è¡Œã€åœºæ‰«ææ—¶åºå‚æ•°è¡¨
             parameter hsync_end = 10'd95,
                       hdat_begin = 10'd143,
                       hdat_end = 10'd783,
@@ -75,7 +74,7 @@
                     cnt_clk <= cnt_clk +1;
             end
 */
-  //************************VGA Çı¶¯²¿·Ö*******************************//ĞĞÉ¨Ãè
+  //************************VGA é©±åŠ¨éƒ¨åˆ†*******************************//è¡Œæ‰«æ
             always @(posedge vga_clk)
             begin
                 if (hcount_ov)
@@ -85,7 +84,7 @@
             end
             assign hcount_ov = (hcount == hpixel_end);
 
-            //³¡É¨Ãè
+            //åœºæ‰«æ
             always @(posedge vga_clk)
             begin
                 if (hcount_ov) begin
@@ -97,7 +96,7 @@
             end
             assign vcount_ov = (vcount == vline_end);
 
-            //Êı¾İ¡¢Í¬²½ĞÅºÅÊä
+            //æ•°æ®ã€åŒæ­¥ä¿¡å·è¾“
             assign dat_act = ((hcount >= hdat_begin) && (hcount < hdat_end))
 && ((vcount >= vdat_begin) && (vcount < vdat_end));
             assign hsync = (hcount > hsync_end);
@@ -107,34 +106,34 @@
             always @(posedge vga_clk)
             begin
                 case(switch[1:0])
-                    2'd0: data <= h_dat; //Ñ¡Ôñºá²ÊÌõ
-                    2'd1: data <= v_dat; //Ñ¡ÔñÊú²ÊÌõ
-                    2'd2: data <= (v_dat ^ h_dat); //²úÉúÆåÅÌ¸ñ
-                    2'd3: data <= (v_dat ~^ h_dat); //²úÉúÆåÅÌ¸ñ
+                    2'd0: data <= h_dat; //é€‰æ‹©æ¨ªå½©æ¡
+                    2'd1: data <= v_dat; //é€‰æ‹©ç«–å½©æ¡
+                    2'd2: data <= (v_dat ^ h_dat); //äº§ç”Ÿæ£‹ç›˜æ ¼
+                    2'd3: data <= (v_dat ~^ h_dat); //äº§ç”Ÿæ£‹ç›˜æ ¼
                 endcase
             end
-//ÖÁÓÚÑÕÉ«µÄÉèÖÃ£¬¿ÉÒÔ´ò¿ªÍøÉÏµ÷É«°å£¬ÍøÉÏÒ»°ãÎª24Î»RGB888£¬ÎÒÃÇ¿ÉÒÔÑ¡ÔñÓÃÃ¿¸öÑÕÉ«ÖĞµÄ¸ß4Î»
-            always @(posedge vga_clk) //²úÉúÊú²ÊÌõ
+//è‡³äºé¢œè‰²çš„è®¾ç½®ï¼Œå¯ä»¥æ‰“å¼€ç½‘ä¸Šè°ƒè‰²æ¿ï¼Œç½‘ä¸Šä¸€èˆ¬ä¸º24ä½RGB888ï¼Œæˆ‘ä»¬å¯ä»¥é€‰æ‹©ç”¨æ¯ä¸ªé¢œè‰²ä¸­çš„é«˜4ä½
+            always @(posedge vga_clk) //äº§ç”Ÿç«–å½©æ¡
             begin
                 if(hcount < 223)
-                    v_dat <= 12'hF00; //ºì
+                    v_dat <= 12'hF00; //çº¢
                 else if(hcount < 303) 
-                    v_dat <= 12'h0F0; //ÂÌ
+                    v_dat <= 12'h0F0; //ç»¿
                 else if(hcount < 383)
-                    v_dat <= 12'h00F; //À¶
+                    v_dat <= 12'h00F; //è“
                 else if(hcount < 463)
-                    v_dat <= 12'hFFF; //°×
+                    v_dat <= 12'hFFF; //ç™½
                 else if(hcount < 543)
-                    v_dat <= 12'hFF0; //»Æ
+                    v_dat <= 12'hFF0; //é»„
                 else if(hcount < 623)
-                    v_dat <= 12'hC0F; //×Ï
+                    v_dat <= 12'hC0F; //ç´«
                 else if(hcount < 703)
-                    v_dat <= 12'h2EE; //Ç³À¶
+                    v_dat <= 12'h2EE; //æµ…è“
                 else
-                    v_dat <= 12'hFFF; //°×É«
+                    v_dat <= 12'hFFF; //ç™½è‰²
             end
 
-            always @(posedge vga_clk) //²úÉúºá²ÊÌõ
+            always @(posedge vga_clk) //äº§ç”Ÿæ¨ªå½©æ¡
             begin
                 if(vcount < 94)
                     h_dat <= 12'hF00; 
