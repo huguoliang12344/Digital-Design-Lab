@@ -20,11 +20,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-  module vga( sys_clk, sys_rst_n, vga_rgb, vga_hs, vga_vs );
+  module vga( sys_clk, sys_rst_n,switch, vga_rgb, vga_hs, vga_vs );
 
             input sys_clk; //系统输入时钟 100MHz
             //input [1:0]switch;//控制
             input sys_rst_n;
+            input [1:0] switch;
             output [11:0] vga_rgb; //VGA 数据输出。RGB 4:4:4
             output vga_hs; //VGA 行同步信号
             output vga_vs; //VGA 场同步信号
@@ -230,4 +231,80 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
             else cnt_v <= cnt_v + 1'b1;
         end
     end
+endmodule
+
+module vga_display (vga_clk,rst_n_w,switch,pixel_xpos,pixel_ypos,pixel_data);
+input vga_clk,rst_n_w;
+input [1:0] switch;//选择显示不同的图案
+input [9:0] pixel_xpos,pixel_ypos;
+output reg [11:0] pixel_data;
+
+parameter H_DISP = 10'd640;//一行像素数
+parameter V_DISP = 10'd480;//一列像素数
+
+//至于颜色的设置，可以打开网上调色板，网上一般为24位RGB888，我们可以选择用每个颜色中的高4位
+localparam White = 12'hFFF;//白色
+localparam Green = 12'h0F0; //绿
+localparam Red = 12'hF00;//红
+localparam Blue = 12'h00F; //蓝
+localparam Yellow = 12'hFF0; //黄
+localparam Purple = 12'hC0F; //紫
+localparam Light_Blue =12'h2EE; //浅蓝
+
+reg [11:0] v_data, h_data;
+
+ //根据当前像素点坐标指定当前像素点颜色数据，在屏幕上显示彩条
+
+ //产生竖彩条
+ always @(posedge vga_clk or negedge rst_n_w) begin 
+    if (!rst_n_w)
+         v_data <= 16'd0; 
+    else begin
+        if((pixel_xpos >= 0) && (pixel_xpos < (H_DISP/6)*1)) 
+            v_data <= Green; 
+        else if((pixel_xpos >= (H_DISP/6)*1) && (pixel_xpos < (H_DISP/6)*2))
+            v_data <= Red; 
+        else if((pixel_xpos >= (H_DISP/6)*2) && (pixel_xpos < (H_DISP/6)*3))
+            v_data <= Blue; 
+        else if((pixel_xpos >= (H_DISP/6)*3) && (pixel_xpos < (H_DISP/6)*4))
+            v_data <= Yellow; 
+        else if((pixel_xpos >= (H_DISP/6)*4) && (pixel_xpos < (H_DISP/6)*5))
+            v_data <= Purple; 
+        else 
+            v_data <= Light_Blue;
+        
+    end
+ end
+
+
+//产生横彩条
+ always @(posedge vga_clk or negedge rst_n_w) begin 
+    if (!rst_n_w)
+        h_data <= 16'd0; 
+    else begin
+        if((pixel_ypos >= 0) && (pixel_ypos < (H_DISP/6)*1)) 
+            h_data <= Green; 
+        else if((pixel_ypos >= (H_DISP/6)*1) && (pixel_ypos < (H_DISP/6)*2))
+            h_data <= Red; 
+        else if((pixel_ypos >= (H_DISP/6)*2) && (pixel_ypos < (H_DISP/6)*3))
+            h_data <= Blue; 
+        else if((pixel_ypos >= (H_DISP/6)*3) && (pixel_ypos < (H_DISP/6)*4))
+            h_data <= Yellow; 
+        else if((pixel_ypos >= (H_DISP/6)*4) && (pixel_ypos < (H_DISP/6)*5))
+            h_data <= Purple; 
+        else 
+            h_data <= Light_Blue;
+        
+    end
+ end
+
+always @(posedge vga_clk)begin
+    case(switch[1:0])
+        2'd0: pixel_data <= h_dat; //选择横彩条
+        2'd1: pixel_data <= v_dat; //选择竖彩条
+        2'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
+        2'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
+    endcase
+end
+    
 endmodule
