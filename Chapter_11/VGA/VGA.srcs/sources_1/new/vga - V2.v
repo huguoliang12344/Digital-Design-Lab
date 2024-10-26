@@ -51,108 +51,7 @@
 
             //vga数据模块的实例化
 
-
-
-/*
-
-
-            //VGA 行、场扫描时序参数表
-            parameter hsync_end = 10'd95,
-                      hdat_begin = 10'd143,
-                      hdat_end = 10'd783,
-                      hpixel_end = 10'd799,
-                      vsync_end = 10'd1,
-                      vdat_begin = 10'd34,
-                      vdat_end = 10'd514,
-                      vline_end = 10'd524;
-
-            clk_wiz_0 inst
-              (
-              // Clock out ports  
-              .clk_out1(vga_clk),
-              .clk_in1(sys_clk)
-              );
-
-  //************************VGA 驱动部分*******************************//行扫描
-            always @(posedge vga_clk)
-            begin
-                if (hcount_ov)
-                    hcount <= 10'd0;
-                 else
-                    hcount <= hcount + 10'd1;
-            end
-            assign hcount_ov = (hcount == hpixel_end);
-
-            //场扫描
-            always @(posedge vga_clk)
-            begin
-                if (hcount_ov) begin
-                    if (vcount_ov)
-                        vcount <= 10'd0;
-                    else
-                        vcount <= vcount + 10'd1;
-                end
-            end
-            assign vcount_ov = (vcount == vline_end);
-
-            //数据、同步信号输
-            assign dat_act = ((hcount >= hdat_begin) && (hcount < hdat_end))
-&& ((vcount >= vdat_begin) && (vcount < vdat_end));
-            assign hsync = (hcount > hsync_end);
-            assign vsync = (vcount > vsync_end);
-            assign disp_RGB = (dat_act) ? data : 12'h000;
-
-            always @(posedge vga_clk)
-            begin
-                case(switch[1:0])
-                    2'd0: data <= h_dat; //选择横彩条
-                    2'd1: data <= v_dat; //选择竖彩条
-                    2'd2: data <= (v_dat ^ h_dat); //产生棋盘格
-                    2'd3: data <= (v_dat ~^ h_dat); //产生棋盘格
-                endcase
-            end
-//至于颜色的设置，可以打开网上调色板，网上一般为24位RGB888，我们可以选择用每个颜色中的高4位
-            always @(posedge vga_clk) //产生竖彩条
-            begin
-                if(hcount < 223)
-                    v_dat <= 12'hF00; //红
-                else if(hcount < 303) 
-                    v_dat <= 12'h0F0; //绿
-                else if(hcount < 383)
-                    v_dat <= 12'h00F; //蓝
-                else if(hcount < 463)
-                    v_dat <= 12'hFFF; //白
-                else if(hcount < 543)
-                    v_dat <= 12'hFF0; //黄
-                else if(hcount < 623)
-                    v_dat <= 12'hC0F; //紫
-                else if(hcount < 703)
-                    v_dat <= 12'h2EE; //浅蓝
-                else
-                    v_dat <= 12'hFFF; //白色
-            end
-
-            always @(posedge vga_clk) //产生横彩条
-            begin
-                if(vcount < 94)
-                    h_dat <= 12'hF00; 
-                else if(vcount < 154)
-                    h_dat <= 12'h0F0; 
-                else if(vcount < 214)
-                    h_dat <= 12'h00F; 
-                else if(vcount < 274)
-                    h_dat <= 12'hFFF; 
-                else if(vcount < 334)
-                    h_dat <= 12'hFF0; 
-                else if(vcount < 394)
-                    h_dat <= 12'hC0F; 
-                else if(vcount < 454)
-                    h_dat <= 12'h2EE; 
-                else
-                    h_dat <= 12'hFFF;
-                end
-
-                */
+  
 endmodule
 
 
@@ -250,10 +149,23 @@ localparam Blue = 12'h00F; //蓝
 localparam Yellow = 12'hFF0; //黄
 localparam Purple = 12'hC0F; //紫
 localparam Light_Blue =12'h2EE; //浅蓝
+localparam Black = 12'h000;//黑色
 
-reg [11:0] v_data, h_data;
+
+always @(posedge vga_clk)begin
+    case(switch[2:0])
+        3'd0: pixel_data <= h_dat; //选择横彩条
+        3'd1: pixel_data <= v_dat; //选择竖彩条
+        3'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
+        3'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
+        3'd4: pixel_data <= char_data;
+        default: pixel_data <= 12'h0000;
+    endcase
+end
 
  //根据当前像素点坐标指定当前像素点颜色数据，在屏幕上显示彩条
+
+ reg [11:0] v_data, h_data;
 
  //产生竖彩条
  always @(posedge vga_clk or negedge rst_n_w) begin 
@@ -294,18 +206,51 @@ reg [11:0] v_data, h_data;
             h_data <= Purple; 
         else 
             h_data <= Light_Blue;
-        
     end
  end
 
-always @(posedge vga_clk)begin
-    case(switch[2:0])
-        3'd0: pixel_data <= h_dat; //选择横彩条
-        3'd1: pixel_data <= v_dat; //选择竖彩条
-        3'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
-        3'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
-        default: pixel_data <= 12'h0000;
-    endcase
+
+//下面代码用于在显示器上显示字符，显示字符其实和现实图片原理类似，但是更简单
+//为了方便在VGA上显示，我们将所有要显示的汉字看作一个整体，从而获得一个“大字模”
+//为了简化字符设计，将多个字符合在一起成一张bmp图像再处理成字模文件，而且字也不大
+localparam POS_X = 10'd288;//字符区域起始点横坐标 
+localparam POS_Y = 10'd232;//字符区域起始点横坐标 
+
+localparam Width = 10'd64;//字符区域宽度
+localparam Height = 10'd16;//字符区域高度
+
+reg [63:0] char [15:0];//用存储期类型形式存储字符
+
+//为了利用上字符存储器，需要定义变量计算像素点相对于字符区域起始点坐标
+wire [9:0] x_cnt;
+wire [9:0] y_cnt;
+
+assign x_cnt = pixel_xpos - POS_X; //像素点相对于字符区域起始点水平坐标
+assign y_cnt = pixel_ypos - POS_Y; //像素点相对于字符区域起始点竖直坐标
+
+//给字符数组赋值取模后的值,为了简单可以直接用excel写这段代码，或者用C语言或者matlab
+always @(posedge vga_clk) begin
+    
+
 end
+
+reg [11:0] char_data;
+ //给不同的区域绘制不同的颜色
+ always @(posedge vga_clk or negedge sys_rst_n) begin 
+    if (!sys_rst_n)
+        char_data <= Black;
+    else begin
+        if((pixel_xpos >= POS_X) && (pixel_xpos < POS_X + WIDTH)
+            && (pixel_ypos >= POS_Y) && (pixel_ypos < POS_Y + HEIGHT)) 
+            begin
+                if(char[y_cnt][10'd63 - x_cnt])//y_cnt行，（63 - x_cnt)列,此处值为1说明是有文字位置
+                    pixel_data <= Red; //绘制字符为红色
+                else
+                    pixel_data <= Yellow; //绘制字符区域背景为蓝色 
+            end
+        else
+            pixel_data <= Black; //绘制屏幕背景为黑色
+    end
+ end
     
 endmodule
