@@ -25,7 +25,7 @@
             input sys_clk; //系统输入时钟 100MHz
             //input [1:0]switch;//控制
             input sys_rst_n;
-            input [1:0] switch;
+            input [2:0] switch;
             output [11:0] vga_rgb; //VGA 数据输出。RGB 4:4:4
             output vga_hs; //VGA 行同步信号
             output vga_vs; //VGA 场同步信号
@@ -235,7 +235,7 @@ endmodule
 
 module vga_display (vga_clk,rst_n_w,switch,pixel_xpos,pixel_ypos,pixel_data);
 input vga_clk,rst_n_w;
-input [1:0] switch;//选择显示不同的图案
+input [2:0] switch;//选择显示不同的图案
 input [9:0] pixel_xpos,pixel_ypos;
 output reg [11:0] pixel_data;
 
@@ -299,11 +299,12 @@ reg [11:0] v_data, h_data;
  end
 
 always @(posedge vga_clk)begin
-    case(switch[1:0])
-        2'd0: pixel_data <= h_dat; //选择横彩条
-        2'd1: pixel_data <= v_dat; //选择竖彩条
-        2'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
-        2'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
+    case(switch[2:0])
+        3'd0: pixel_data <= h_dat; //选择横彩条
+        3'd1: pixel_data <= v_dat; //选择竖彩条
+        3'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
+        3'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
+        default: pixel_data <= 12'h0000;
     endcase
 end
     
