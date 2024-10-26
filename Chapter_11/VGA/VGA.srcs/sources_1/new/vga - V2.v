@@ -175,7 +175,7 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
     parameter V_FRONT = 10'd10; //场显示前沿
     parameter V_TOTAL = 10'd525; //场扫描周期
 
-    //reg define 
+    //reg define 将行场计数器的值与VGA时序中的参数作比较，我们就可以判断行场同步信号何时处于低电平同步状态，以及何时输出RGB444格式的图像数据。
     //过行计数器cnt_h对像素时钟计数，计满一个行扫描周期后清零并重新开始计数。
     reg [9:0] cnt_h;
     //通过场计数器cnt_v对行进行计数，即扫描完一行后cnt_v加1，计满一个场扫描周期后清零并重新开始计数
@@ -194,7 +194,19 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
                     &&((cnt_v >= V_SYNC+V_BACK) && (cnt_v < V_SYNC+V_BACK+V_DISP)))
                     ? 1'b1 : 1'b0;
 
-    //像素点坐标 
+
+    
+    //RGB444数据输出 
+    assign vga_rgb = vga_en ? pixel_data : 16'd0;
+
+    //像素点颜色数据输入请求信号     
+    //由于坐标输出后下一个时钟周期才能接收到像素点的颜色数据，
+    //因此数据请求信号data_req比数据输出使能信号vga_en提前一个时钟周期。
+    assign data_req = (((cnt_h >= H_SYNC+H_BACK-1'b1) && (cnt_h < H_SYNC+H_BACK+H_DISP-1'b1))
+                      && ((cnt_v >= V_SYNC+V_BACK) && (cnt_v < V_SYNC+V_BACK+V_DISP)))
+                      ? 1'b1 : 1'b0;
+    
+    //输出当前像素点的纵横坐标值
     assign pixel_xpos = data_req ? (cnt_h - (H_SYNC + H_BACK - 1'b1)) : 10'd0;
     assign pixel_ypos = data_req ? (cnt_v - (V_SYNC + V_BACK - 1'b1)) : 10'd0;
 
@@ -218,9 +230,4 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
             else cnt_v <= cnt_v + 1'b1;
         end
     end
-
-
-
-
-
 endmodule
