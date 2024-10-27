@@ -159,7 +159,8 @@ always @(posedge vga_clk)begin
         3'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
         3'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
         3'd4: pixel_data <= char_data;
-        default: pixel_data <= 12'h0000;
+        3'd5: pixel_data <= pic_data;
+        default: pixel_data <= Black;
     endcase
 end
 
@@ -237,20 +238,20 @@ end
 
 reg [11:0] char_data;
  //给不同的区域绘制不同的颜色
- always @(posedge vga_clk or negedge sys_rst_n) begin 
-    if (!sys_rst_n)
+ always @(posedge vga_clk or negedge rst_n_w) begin 
+    if (!rst_n_w)
         char_data <= Black;
     else begin
         if((pixel_xpos >= POS_X) && (pixel_xpos < POS_X + WIDTH)
             && (pixel_ypos >= POS_Y) && (pixel_ypos < POS_Y + HEIGHT)) 
             begin
                 if(char[y_cnt][10'd63 - x_cnt])//y_cnt行，（63 - x_cnt)列,此处值为1说明是有文字位置
-                    pixel_data <= Red; //绘制字符为红色
+                    char_data <= Red; //绘制字符为红色
                 else
-                    pixel_data <= Yellow; //绘制字符区域背景为蓝色 
+                    char_data <= Yellow; //绘制字符区域背景为蓝色 
             end
         else
-            pixel_data <= Black; //绘制屏幕背景为黑色
+            char_data <= Black; //绘制屏幕背景为黑色
     end
  end
     
@@ -260,12 +261,48 @@ reg [11:0] char_data;
 只能区分两种颜色。然而在显示图片时，由于1bit的数据无法区分各像素点的色彩差异，因此
 二维数组已经不能满足图片存储的需要。本章我们将通过例化IP核来实现使用ROM存储图片，
 并将ROM中存储的图片通过VGA接口显示到屏幕上。*/
-localparam Pic_Pos_X = 10'd0;
-localparam Pic_Pos_Y = 10'd0;
-localparam Pic_Width = 10'd640;
-localparam Pic_Height = 10'd480;
+localparam Pic_Pos_X = 10'd0;//图片显示起始横坐标
+localparam Pic_Pos_Y = 10'd0;//图片显示起始纵坐标
+localparam Pic_Width = 10'd640; //图片宽度
+localparam Pic_Height = 10'd480; //图片高度
+localparam Pix_Total = Pic_Width * Pic_Width;//总像素数
 
+wire        rom_rd_en;//读ROM使能信号
+reg  [18:0] rom_addr;//存下像素总数需要18位
+reg         rom_valid;//读ROM数据有效信号
 
+wire [11:0] rom_data; //rom输出数据
+wire [11:0] pic_data;
+
+//从ROM中读出的图像数据有效时，将其输出显示
+assign pic_data = rom_valid ? rom_data : Black;
+
+//当前像素点坐标位于图片显示区域内时，读ROM使能信号拉高
+assign rom_rd_en = (pixel_xpos >= POS_X) && (pixel_xpos < POS_X + WIDTH)
+                     && (pixel_ypos >= POS_Y) && (pixel_ypos < POS_Y + HEIGHT)
+                     ? 1'b1 : 1'b0;
+
+//控制读地址
+always @(posedge vga_clk or negedge rst_n_w) begin 
+    if (!rst_n_w) 
+        rom_addr <= 14'd0;
+    else if(rom_rd_en) begin
+        if(rom_addr < TOTAL - 1'b1)
+            rom_addr <= rom_addr + 1'b1; //每次读ROM操作后，读地址加1
+        else
+        rom_addr <= 19'd0; //读到ROM末地址后，从首地址重新开始读操作
+    end
+    else
+        rom_addr <= rom_addr;
+end
+
+//从发出读使能到ROM输出有效数据存在一个时钟周期的延时
+always @(posedge vga_clk or negedge rst_n_w) begin 
+    if (!rst_n_w)
+        rom_valid <= 1'b0;
+    else
+        rom_valid <= rom_rd_en;
+end
 
 
 
