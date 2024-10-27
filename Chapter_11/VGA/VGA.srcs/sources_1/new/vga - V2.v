@@ -260,6 +260,11 @@ reg [11:0] char_data;
 只能区分两种颜色。然而在显示图片时，由于1bit的数据无法区分各像素点的色彩差异，因此
 二维数组已经不能满足图片存储的需要。本章我们将通过例化IP核来实现使用ROM存储图片，
 并将ROM中存储的图片通过VGA接口显示到屏幕上。*/
+localparam Pic_Pos_X = 10'd0;
+localparam Pic_Pos_Y = 10'd0;
+localparam Pic_Width = 10'd640;
+localparam Pic_Height = 10'd480;
+
 
 
 
