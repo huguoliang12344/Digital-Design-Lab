@@ -24,15 +24,46 @@
             assign rst_n_w =  sys_rst_n & locked;
 
             //pll IP核的实例化
+            vga_pll u_vga_pll (
+              // Clock out ports
+                    .clk_out1(vga_clk),
+              // Status and control signals
+                    .reset(sys_rst_n),
+                    .locked(locked),
+             // Clock in ports
+                    .clk_in1(sys_clk));
 
 
             //vga_driver驱动器的实例化
-
+            vga_driver u_vga_driver(
+                    .vga_clk(vga_clk),
+                    .rst_n_w(rst_n_w),
+                    .pixel_data(pixel_data),
+                    .pixel_xpos(pixel_xpos),
+                    .pixel_ypos(pixel_ypos),
+                    .vga_hs(vga_hs),
+                    .vga_vs(vga_vs),
+                    .vga_rgb(vga_rgb));
 
             //vga_display模块的实例化
 
+            vga_display u_vga_display(
+                    .vga_clk(vga_clk),
+                    .rst_n_w(rst_n_w),
+                    .switch(switch),
+                    .pixel_xpos(pixel_xpos),
+                    .pixel_ypos(pixel_ypos),
+                    .pixel_data(pixel_data));
   
 endmodule
+
+
+
+
+
+
+
+
 
 
 //vga驱动模块
@@ -112,6 +143,16 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
     end
 endmodule
 
+
+
+
+
+
+
+
+
+
+//vga_display模块
 module vga_display (vga_clk,rst_n_w,switch,pixel_xpos,pixel_ypos,pixel_data);
 input vga_clk,rst_n_w;
 input [2:0] switch;//选择显示不同的图案
@@ -122,36 +163,34 @@ parameter H_DISP = 10'd640;//一行像素数
 parameter V_DISP = 10'd480;//一列像素数
 
 //至于颜色的设置，可以打开网上调色板，网上一般为24位RGB888，我们可以选择用每个颜色中的高4位
-localparam White = 12'hFFF;//白色
-localparam Green = 12'h0F0; //绿
-localparam Red = 12'hF00;//红
-localparam Blue = 12'h00F; //蓝
-localparam Yellow = 12'hFF0; //黄
-localparam Purple = 12'hC0F; //紫
-localparam Light_Blue =12'h2EE; //浅蓝
-localparam Black = 12'h000;//黑色
+localparam White      = 12'hFFF;//白色
+localparam Green      = 12'h0F0; //绿
+localparam Red        = 12'hF00;//红
+localparam Blue       = 12'h00F; //蓝
+localparam Yellow     = 12'hFF0; //黄
+localparam Purple     = 12'hC0F; //紫
+localparam Light_Blue = 12'h2EE; //浅蓝
+localparam Black      = 12'h000;//黑色
 
 
-always @(posedge vga_clk)begin
+always @(posedge vga_clk) begin
     case(switch[2:0])
-        3'd0: pixel_data <= h_dat; //选择横彩条
-        3'd1: pixel_data <= v_dat; //选择竖彩条
+        3'd0: pixel_data <= v_dat; //选择竖彩条
+        3'd1: pixel_data <= h_dat; //选择横彩条
         3'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
         3'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
-        3'd4: pixel_data <= char_data;
-        3'd5: pixel_data <= pic_data;
-        default: pixel_data <= Black;
+        3'd4: pixel_data <= char_data;//选择显示字符
+        3'd5: pixel_data <= pic_data;//选择显示图片
+        default: pixel_data <= White;//其他显示纯白
     endcase
 end
 
- //根据当前像素点坐标指定当前像素点颜色数据，在屏幕上显示彩条
-
- reg [11:0] v_data, h_data;
+ reg [11:0] v_data, h_data;//控制彩条数据的
 
  //产生竖彩条
  always @(posedge vga_clk or negedge rst_n_w) begin 
     if (!rst_n_w)
-         v_data <= 16'd0; 
+         v_data <= 12'd0; 
     else begin
         if((pixel_xpos >= 0) && (pixel_xpos < (H_DISP/6)*1)) 
             v_data <= Green; 
@@ -164,8 +203,7 @@ end
         else if((pixel_xpos >= (H_DISP/6)*4) && (pixel_xpos < (H_DISP/6)*5))
             v_data <= Purple; 
         else 
-            v_data <= Light_Blue;
-        
+            v_data <= Light_Blue;        
     end
  end
 
@@ -173,17 +211,17 @@ end
 //产生横彩条
  always @(posedge vga_clk or negedge rst_n_w) begin 
     if (!rst_n_w)
-        h_data <= 16'd0; 
+        h_data <= 12'd0; 
     else begin
-        if((pixel_ypos >= 0) && (pixel_ypos < (H_DISP/6)*1)) 
+        if((pixel_ypos >= 0) && (pixel_ypos < (V_DISP/6)*1)) 
             h_data <= Green; 
-        else if((pixel_ypos >= (H_DISP/6)*1) && (pixel_ypos < (H_DISP/6)*2))
+        else if((pixel_ypos >= (V_DISP/6)*1) && (pixel_ypos < (V_DISP/6)*2))
             h_data <= Red; 
-        else if((pixel_ypos >= (H_DISP/6)*2) && (pixel_ypos < (H_DISP/6)*3))
+        else if((pixel_ypos >= (V_DISP/6)*2) && (pixel_ypos < (V_DISP/6)*3))
             h_data <= Blue; 
-        else if((pixel_ypos >= (H_DISP/6)*3) && (pixel_ypos < (H_DISP/6)*4))
+        else if((pixel_ypos >= (V_DISP/6)*3) && (pixel_ypos < (V_DISP/6)*4))
             h_data <= Yellow; 
-        else if((pixel_ypos >= (H_DISP/6)*4) && (pixel_ypos < (H_DISP/6)*5))
+        else if((pixel_ypos >= (V_DISP/6)*4) && (pixel_ypos < (V_DISP/6)*5))
             h_data <= Purple; 
         else 
             h_data <= Light_Blue;
@@ -191,9 +229,11 @@ end
  end
 
 
-/*下面代码用于在显示器上显示字符，显示字符其实和现实图片原理类似，但是更简单,因为只区分白色和其他颜色
+/*下面代码用于在显示器上显示字符，显示字符其实和现实图片原理类似，但是更简单,
+因为驱魔软件此时只区分白色和其他颜色，白色就是0，其他颜色就是1
 为了方便在VGA上显示，我们将所有要显示的汉字看作一个整体，从而获得一个“大字模”
-为了简化字符设计，将多个字符合在一起成一张bmp图像再处理成字模文件，而且字也不大*/
+为了简化字符设计，将多个字符合在一起成一张bmp图像再处理成字模文件，而且字也不大
+一个字占用16*16的像素，一个四个字，所以一共宽度是64，高度是16*/
 
 localparam POS_X = 10'd288;//字符区域起始点横坐标 
 localparam POS_Y = 10'd232;//字符区域起始点横坐标 
@@ -201,7 +241,7 @@ localparam POS_Y = 10'd232;//字符区域起始点横坐标
 localparam Width = 10'd64;//字符区域宽度
 localparam Height = 10'd16;//字符区域高度
 
-reg [63:0] char [15:0];//用存储期类型形式存储字符
+reg [63:0] char [15:0];//用存储期类型形式存储字符，类似二维数组
 
 //为了利用上字符存储器，需要定义变量计算像素点相对于字符区域起始点坐标
 wire [9:0] x_cnt;
@@ -210,17 +250,31 @@ wire [9:0] y_cnt;
 assign x_cnt = pixel_xpos - POS_X; //像素点相对于字符区域起始点水平坐标
 assign y_cnt = pixel_ypos - POS_Y; //像素点相对于字符区域起始点竖直坐标
 
-//给字符数组赋值取模后的值,为了简单可以直接用excel写这段代码，或者用C语言或者matlab
+//给字符数组赋值取模后的值,为了简单可以直接用excel写这段代码，或者用C语言或者matlab循环语句写
 always @(posedge vga_clk) begin
-    
-
+    char[0]         <=  64'h    0000066001801830;
+    char[1]         <=  64'h    FFFF066001801830;
+    char[2]         <=  64'h    0660066001801830;
+    char[3]         <=  64'h    066006667FFE1830;
+    char[4]         <=  64'h    0660066C6306FFFF;
+    char[5]         <=  64'h    3FFC7E78C30C1830;
+    char[6]         <=  64'h    366C067007803878;
+    char[7]         <=  64'h    366C0660078C3C78;
+    char[8]         <=  64'h    366C06600CD87EFC;
+    char[9]         <=  64'h    366C06601CF078FC;
+    char[10]        <=  64'h    3C3C06603C60D9B6;
+    char[11]        <=  64'h    380C06636C301B33;
+    char[12]        <=  64'h    300C1E63CC181E30;
+    char[13]        <=  64'h    300CF6630F0C1830;
+    char[14]        <=  64'h    3FFC663F0E071830;
+    char[15]        <=  64'h    300C06000C001830;  //西北农林bmp生成的字模
 end
 
 reg [11:0] char_data;
  //给不同的区域绘制不同的颜色
  always @(posedge vga_clk or negedge rst_n_w) begin 
     if (!rst_n_w)
-        char_data <= Black;
+        char_data <= White;
     else begin
         if((pixel_xpos >= POS_X) && (pixel_xpos < POS_X + WIDTH)
             && (pixel_ypos >= POS_Y) && (pixel_ypos < POS_Y + HEIGHT)) 
@@ -228,7 +282,7 @@ reg [11:0] char_data;
                 if(char[y_cnt][10'd63 - x_cnt])//y_cnt行，（63 - x_cnt)列,此处值为1说明是有文字位置
                     char_data <= Red; //绘制字符为红色
                 else
-                    char_data <= Yellow; //绘制字符区域背景为蓝色 
+                    char_data <= Yellow; //绘制字符区域背景为黄色 
             end
         else
             char_data <= Black; //绘制屏幕背景为黑色
