@@ -1,24 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 09/20/2016 10:46:52 AM
-// Design Name: 
-// Module Name: vga
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 产生两种条纹和两种棋盘格照片，通过拨码开关控制具体显示哪一个
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
 
   module vga( sys_clk, sys_rst_n,switch, vga_rgb, vga_hs, vga_vs );
 
