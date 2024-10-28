@@ -43,13 +43,13 @@
             //Pll输出稳定后就停止复位
             assign rst_n_w =  sys_rst_n & locked;
 
-            //pll核的实例化
+            //pll IP核的实例化
 
 
-            //vga驱动器的实例化
+            //vga_driver驱动器的实例化
 
 
-            //vga数据模块的实例化
+            //vga_display模块的实例化
 
   
 endmodule
