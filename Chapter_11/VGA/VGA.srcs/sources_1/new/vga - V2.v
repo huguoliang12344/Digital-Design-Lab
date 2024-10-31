@@ -341,11 +341,10 @@ always @(posedge vga_clk or negedge rst_n_w) begin
         rom_addr <= 19'd0;
     else if(rom_addr == Pix_Total-1'b1)
         rom_addr <= 19'd0; //读到ROM末地址后，从首地址重新开始读操作
-    //else if(rom_rd_en) 
-    else
+    else if(rom_rd_en) 
         rom_addr <= rom_addr + 1'b1; //每次读ROM操作后，读地址加1
-//    else
-//        rom_addr <= rom_addr;
+    else
+       rom_addr <= rom_addr;
 end
 
 //控制读地址
