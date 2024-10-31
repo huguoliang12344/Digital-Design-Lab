@@ -313,10 +313,10 @@ reg [11:0] char_data;
 只能区分两种颜色。然而在显示图片时，由于1bit的数据无法区分各像素点的色彩差异，因此
 二维数组已经不能满足图片存储的需要。本章我们将通过例化IP核来实现使用ROM存储图片，
 并将ROM中存储的图片通过VGA接口显示到屏幕上。*/
-localparam Pic_Pos_X = 10'd1;//图片显示起始横坐标
-localparam Pic_Pos_Y = 10'd1;//图片显示起始纵坐标
-localparam Pic_Width = 10'd630; //图片宽度
-localparam Pic_Height= 10'd450; //图片高度
+localparam Pic_Pos_X = 10'd0;//图片显示起始横坐标
+localparam Pic_Pos_Y = 10'd0;//图片显示起始纵坐标
+localparam Pic_Width = 10'd640; //图片宽度
+localparam Pic_Height= 10'd480; //图片高度
 localparam Pix_Total = Pic_Width*Pic_Height;//总像素数640*480
 
 wire        rom_rd_en;//读ROM使能信号
@@ -336,19 +336,20 @@ assign rom_rd_en = (pixel_xpos >= Pic_Pos_X) && (pixel_xpos < Pic_Pos_X + Pic_Wi
                      ? 1'b1 : 1'b0;
 
 //控制读地址
-/*always @(posedge vga_clk or negedge rst_n_w) begin 
+always @(posedge vga_clk or negedge rst_n_w) begin 
     if (!rst_n_w) 
         rom_addr <= 19'd0;
     else if(rom_addr == Pix_Total-1'b1)
         rom_addr <= 19'd0; //读到ROM末地址后，从首地址重新开始读操作
-    else if(rom_rd_en) 
-        rom_addr <= rom_addr + 1'b1; //每次读ROM操作后，读地址加1
+    //else if(rom_rd_en) 
     else
-        rom_addr <= rom_addr;
-end*/
+        rom_addr <= rom_addr + 1'b1; //每次读ROM操作后，读地址加1
+//    else
+//        rom_addr <= rom_addr;
+end
 
 //控制读地址
-always @(posedge vga_clk or negedge rst_n_w) begin 
+/*always @(posedge vga_clk or negedge rst_n_w) begin 
     if (!rst_n_w) 
         rom_addr <= 19'd0;
     else if(rom_rd_en) begin
@@ -359,7 +360,7 @@ always @(posedge vga_clk or negedge rst_n_w) begin
     end
     else
         rom_addr <= rom_addr;
-end
+end*/
 
 //从发出读使能到ROM输出有效数据存在一个时钟周期的延时
 always @(posedge vga_clk or negedge rst_n_w) begin 
