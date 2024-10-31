@@ -24,14 +24,16 @@
             assign rst_n_w =  sys_rst_n & locked;
 
             //pll IP核的实例化
-            vga_pll u_vga_pll (
-              // Clock out ports
-                    .clk_out1(vga_clk),
-              // Status and control signals
-                    .reset(sys_rst_n),
-                    .locked(locked),
-             // Clock in ports
-                    .clk_in1(sys_clk));
+
+            vga_pll u_pll
+            (
+            // Clock out ports
+            .clk_out1(vga_clk),     // output clk_out1
+            // Status and control signals
+            .resetn(sys_rst_n), // input resetn
+            .locked(locked),       // output locked
+            // Clock in ports
+            .clk_in1(sys_clk));      // input clk_in1
 
 
             //vga_driver驱动器的实例化
@@ -54,6 +56,21 @@
                     .pixel_xpos(pixel_xpos),
                     .pixel_ypos(pixel_ypos),
                     .pixel_data(pixel_data));
+
+            ila_0 u_ila_0 (
+                    .clk(vga_clk), // input wire clk
+
+
+                    .probe0(u_vga_display.rom_rd_en), // input wire [0:0]  probe0  
+                    .probe1(u_vga_display.rom_valid), // input wire [0:0]  probe1 
+                    .probe2(u_vga_display.rom_addr), // input wire [18:0]  probe2 
+                    .probe3(u_vga_display.rom_data), // input wire [23:0]  probe3 
+                    .probe4(pixel_data), // input wire [11:0]  probe4
+                    .probe5(pixel_xpos), 
+                    .probe6(pixel_ypos) 
+
+                );
+
   
 endmodule
 
@@ -113,8 +130,8 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
     //像素点颜色数据输入请求信号     
     //由于坐标输出后下一个时钟周期才能接收到像素点的颜色数据，
     //因此数据请求信号data_req比数据输出使能信号vga_en提前一个时钟周期。
-    assign data_req = (((cnt_h >= H_SYNC+H_BACK-1'b1) && (cnt_h < H_SYNC+H_BACK+H_DISP-1'b1))
-                      && ((cnt_v >= V_SYNC+V_BACK) && (cnt_v < V_SYNC+V_BACK+V_DISP)))
+    assign data_req = (((cnt_h >= H_SYNC + H_BACK-1'b1) && (cnt_h < H_SYNC + H_BACK + H_DISP-1'b1))
+                      && ((cnt_v >= V_SYNC + V_BACK) && (cnt_v < V_SYNC + V_BACK + V_DISP)))
                       ? 1'b1 : 1'b0;
     
     //输出当前像素点的纵横坐标值
@@ -123,7 +140,7 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
 
     //行计数器对像素时钟计数
     always @(posedge vga_clk or negedge rst_n_w) begin 
-        if (!sys_rst_n)
+        if (!rst_n_w)
             cnt_h <= 10'd0; 
         else if(cnt_h == H_TOTAL - 1'b1) 
             cnt_h <= 10'd0; 
@@ -133,8 +150,8 @@ module vga_driver(vga_clk,rst_n_w,pixel_data,pixel_xpos,pixel_ypos,vga_hs,vga_vs
 
     //场计数器对像素时钟计数
     always @(posedge vga_clk or negedge rst_n_w) begin 
-        if (!sys_rst_n)
-            cnt_ <= 10'd0; 
+        if (!rst_n_w)
+            cnt_v <= 10'd0; 
         else if(cnt_h == H_TOTAL - 1'b1) begin
             if(cnt_v == V_TOTAL - 1'b1)
                 cnt_v <= 10'd0;
@@ -172,20 +189,21 @@ localparam Purple     = 12'hC0F; //紫
 localparam Light_Blue = 12'h2EE; //浅蓝
 localparam Black      = 12'h000;//黑色
 
+reg [11:0] v_data, h_data;//控制彩条数据的
 
 always @(posedge vga_clk) begin
     case(switch[2:0])
-        3'd0: pixel_data <= v_dat; //选择竖彩条
-        3'd1: pixel_data <= h_dat; //选择横彩条
-        3'd2: pixel_data <= (v_dat ^ h_dat); //产生棋盘格异或
-        3'd3: pixel_data <= (v_dat ~^ h_dat); //产生棋盘格同或
+        3'd0: pixel_data <= v_data; //选择竖彩条
+        3'd1: pixel_data <= h_data; //选择横彩条
+        3'd2: pixel_data <= (v_data ^ h_data); //产生棋盘格异或
+        3'd3: pixel_data <= (v_data ~^ h_data); //产生棋盘格同或
         3'd4: pixel_data <= char_data;//选择显示字符
         3'd5: pixel_data <= pic_data;//选择显示图片
         default: pixel_data <= White;//其他显示纯白
     endcase
 end
 
- reg [11:0] v_data, h_data;//控制彩条数据的
+
 
  //产生竖彩条
  always @(posedge vga_clk or negedge rst_n_w) begin 
@@ -238,8 +256,8 @@ end
 localparam POS_X = 10'd288;//字符区域起始点横坐标 
 localparam POS_Y = 10'd232;//字符区域起始点横坐标 
 
-localparam Width = 10'd64;//字符区域宽度
-localparam Height = 10'd16;//字符区域高度
+localparam WIDTH = 10'd64;//字符区域宽度
+localparam HEIGHT = 10'd16;//字符区域高度
 
 reg [63:0] char [15:0];//用存储期类型形式存储字符，类似二维数组
 
@@ -295,14 +313,14 @@ reg [11:0] char_data;
 只能区分两种颜色。然而在显示图片时，由于1bit的数据无法区分各像素点的色彩差异，因此
 二维数组已经不能满足图片存储的需要。本章我们将通过例化IP核来实现使用ROM存储图片，
 并将ROM中存储的图片通过VGA接口显示到屏幕上。*/
-localparam Pic_Pos_X = 10'd0;//图片显示起始横坐标
-localparam Pic_Pos_Y = 10'd0;//图片显示起始纵坐标
-localparam Pic_Width = 10'd640; //图片宽度
-localparam Pic_Height = 10'd480; //图片高度
-localparam Pix_Total = Pic_Width * Pic_Width;//总像素数
+localparam Pic_Pos_X = 10'd1;//图片显示起始横坐标
+localparam Pic_Pos_Y = 10'd1;//图片显示起始纵坐标
+localparam Pic_Width = 10'd630; //图片宽度
+localparam Pic_Height= 10'd450; //图片高度
+localparam Pix_Total = Pic_Width*Pic_Height;//总像素数640*480
 
 wire        rom_rd_en;//读ROM使能信号
-reg  [18:0] rom_addr;//存下像素总数需要18位
+reg  [18:0] rom_addr;//存下像素总数需要19位
 reg         rom_valid;//读ROM数据有效信号
 
 wire [11:0] rom_data; //rom输出数据
@@ -310,18 +328,31 @@ wire [11:0] pic_data;
 
 //从ROM中读出的图像数据有效时，将其输出显示
 assign pic_data = rom_valid ? rom_data : Black;
+//assign pic_data = rom_valid ? Yellow : Black;
 
 //当前像素点坐标位于图片显示区域内时，读ROM使能信号拉高
-assign rom_rd_en = (pixel_xpos >= POS_X) && (pixel_xpos < POS_X + WIDTH)
-                     && (pixel_ypos >= POS_Y) && (pixel_ypos < POS_Y + HEIGHT)
+assign rom_rd_en = (pixel_xpos >= Pic_Pos_X) && (pixel_xpos < Pic_Pos_X + Pic_Width)
+                     && (pixel_ypos >= Pic_Pos_Y) && (pixel_ypos < Pic_Pos_Y + Pic_Height)
                      ? 1'b1 : 1'b0;
+
+//控制读地址
+/*always @(posedge vga_clk or negedge rst_n_w) begin 
+    if (!rst_n_w) 
+        rom_addr <= 19'd0;
+    else if(rom_addr == Pix_Total-1'b1)
+        rom_addr <= 19'd0; //读到ROM末地址后，从首地址重新开始读操作
+    else if(rom_rd_en) 
+        rom_addr <= rom_addr + 1'b1; //每次读ROM操作后，读地址加1
+    else
+        rom_addr <= rom_addr;
+end*/
 
 //控制读地址
 always @(posedge vga_clk or negedge rst_n_w) begin 
     if (!rst_n_w) 
-        rom_addr <= 14'd0;
+        rom_addr <= 19'd0;
     else if(rom_rd_en) begin
-        if(rom_addr < TOTAL - 1'b1)
+        if(rom_addr < Pix_Total - 1'b1)
             rom_addr <= rom_addr + 1'b1; //每次读ROM操作后，读地址加1
         else
         rom_addr <= 19'd0; //读到ROM末地址后，从首地址重新开始读操作
@@ -338,7 +369,12 @@ always @(posedge vga_clk or negedge rst_n_w) begin
         rom_valid <= rom_rd_en;
 end
 
-
+pic_ROM u_pic_ROM(
+  .clka(vga_clk),    // input wire clka
+  .ena(rom_rd_en),      // input wire ena
+  .addra(rom_addr),  // input wire [18 : 0] addra
+  .douta(rom_data)  // output wire [11 : 0] douta
+);
 
 
 endmodule
